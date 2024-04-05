@@ -1,0 +1,98 @@
+import tkinter as tk
+from tkinter import ttk
+import string
+import random
+import subprocess
+
+class PasswordGeneratorApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Password Generator")
+        
+        # Variables
+        self.password_var = tk.StringVar()
+        self.length_var = tk.IntVar(value=12)
+        self.include_upper_var = tk.BooleanVar(value=True)
+        self.include_lower_var = tk.BooleanVar(value=True)
+        self.include_digits_var = tk.BooleanVar(value=True)
+        self.include_symbols_var = tk.BooleanVar(value=True)
+        
+        # GUI setup
+        main_frame = ttk.Frame(root, padding="20")
+        main_frame.grid(row=0, column=0, sticky="nsew")
+        
+        # Password Entry
+        ttk.Label(main_frame, text="Generated Password:").grid(row=0, column=0, sticky="w")
+        password_entry = ttk.Entry(main_frame, textvariable=self.password_var, width=30, state="readonly")
+        password_entry.grid(row=0, column=1, sticky="w", padx=10, pady=5)
+        
+        # Password Length
+        ttk.Label(main_frame, text="Password Length:").grid(row=1, column=0, sticky="w")
+        length_entry = ttk.Entry(main_frame, textvariable=self.length_var, width=5)
+        length_entry.grid(row=1, column=1, sticky="w", padx=10, pady=5)
+        
+        # Checkboxes
+        ttk.Checkbutton(main_frame, text="Include Uppercase", variable=self.include_upper_var).grid(row=2, column=0, sticky="w", padx=10, pady=5)
+        ttk.Checkbutton(main_frame, text="Include Lowercase", variable=self.include_lower_var).grid(row=3, column=0, sticky="w", padx=10, pady=5)
+        ttk.Checkbutton(main_frame, text="Include Digits", variable=self.include_digits_var).grid(row=4, column=0, sticky="w", padx=10, pady=5)
+        ttk.Checkbutton(main_frame, text="Include Symbols", variable=self.include_symbols_var).grid(row=5, column=0, sticky="w", padx=10, pady=5)
+        
+        # Generate Button
+        generate_btn = ttk.Button(main_frame, text="Generate Password", command=self.generate_password)
+        generate_btn.grid(row=6, column=0, columnspan=2, pady=10)
+        
+        # Copy Button
+        copy_btn = ttk.Button(main_frame, text="Copy to Clipboard", command=self.copy_to_clipboard)
+        copy_btn.grid(row=7, column=0, columnspan=2, pady=5)
+        
+        # Adjusting column and row weights
+        main_frame.columnconfigure(1, weight=1)
+        main_frame.rowconfigure(8, weight=1)
+    
+    def generate_password(self):
+        length = self.length_var.get()
+        include_upper = self.include_upper_var.get()
+        include_lower = self.include_lower_var.get()
+        include_digits = self.include_digits_var.get()
+        include_symbols = self.include_symbols_var.get()
+        
+        characters = ''
+        if include_upper:
+            characters += string.ascii_uppercase
+        if include_lower:
+            characters += string.ascii_lowercase
+        if include_digits:
+            characters += string.digits
+        if include_symbols:
+            characters += string.punctuation
+        
+        if not characters:
+            tk.messagebox.showerror("Error", "Please select at least one character type.")
+            return
+        
+        password = ''.join(random.choice(characters) for _ in range(length))
+        self.password_var.set(password)
+    
+    def copy_to_clipboard(self):
+        password = self.password_var.get()
+        self.root.clipboard_clear()
+        self.root.clipboard_append(password)
+        self.root.update()  # Required on macOS
+        
+        # Notify the user that the password has been copied to clipboard
+        if 'win' in tk.Tcl().eval('tk windowingsystem'):
+            # Windows
+            subprocess.run(['clip'], input=password.strip(), check=True, encoding='utf-8')
+        else:
+            # Linux and macOS
+            self.root.clipboard_append(password)
+        
+        tk.messagebox.showinfo("Copied", "Password copied to clipboard!")
+
+def main():
+    root = tk.Tk()
+    app = PasswordGeneratorApp(root)
+    root.mainloop()
+
+if __name__ == "__main__":
+    main()
