@@ -1,0 +1,88 @@
+import tkinter as tk
+from tkinter import ttk
+import requests
+
+class WeatherApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Weather App")
+        
+        # Variables
+        self.location_var = tk.StringVar(value="New York")
+        self.weather_data = {}
+        
+        # GUI setup
+        main_frame = ttk.Frame(root, padding=20)
+        main_frame.grid(row=0, column=0, sticky="nsew")
+        
+        location_label = ttk.Label(main_frame, text="Enter Location:")
+        location_label.grid(row=0, column=0, padx=5, pady=5)
+        
+        self.location_entry = ttk.Entry(main_frame, textvariable=self.location_var, width=30)
+        self.location_entry.grid(row=0, column=1, padx=5, pady=5)
+        
+        get_weather_btn = ttk.Button(main_frame, text="Get Weather", command=self.get_weather)
+        get_weather_btn.grid(row=0, column=2, padx=5, pady=5)
+        
+        self.weather_info_label = ttk.Label(main_frame, text="", wraplength=400)
+        self.weather_info_label.grid(row=1, column=0, columnspan=3, padx=5, pady=5)
+        
+        # Weather Icon
+        self.weather_icon_label = ttk.Label(main_frame)
+        self.weather_icon_label.grid(row=2, column=0, columnspan=3, padx=5, pady=5)
+        
+    def get_weather(self):
+        location = self.location_var.get()
+        api_key = "d06f22c1fb3c922528263201572347b4"  # Replace with your OpenWeatherMap API key
+        
+        url = f"http://api.openweathermap.org/data/2.5/weather?q={location}&appid={api_key}&units=metric"
+        
+        response = requests.get(url)
+        data = response.json()
+        
+        if response.status_code == 200:
+            self.weather_data['location'] = data['name']
+            self.weather_data['temperature'] = data['main']['temp']
+            self.weather_data['weather'] = data['weather'][0]['description']
+            self.weather_data['humidity'] = data['main']['humidity']
+            self.weather_data['wind_speed'] = data['wind']['speed']
+            self.weather_data['icon'] = data['weather'][0]['icon']
+            
+            self.display_weather_info()
+        else:
+            self.weather_info_label.config(text="Error fetching weather data.")
+        
+    def display_weather_info(self):
+        location = self.weather_data['location']
+        temperature = self.weather_data['temperature']
+        weather = self.weather_data['weather']
+        humidity = self.weather_data['humidity']
+        wind_speed = self.weather_data['wind_speed']
+        icon = self.weather_data['icon']
+        
+        weather_info = f"Location: {location}\n"
+        weather_info += f"Temperature: {temperature}°C\n"
+        weather_info += f"Weather: {weather}\n"
+        weather_info += f"Humidity: {humidity}%\n"
+        weather_info += f"Wind Speed: {wind_speed} m/s"
+        
+        self.weather_info_label.config(text=weather_info)
+        
+        # Load weather icon
+        icon_url = f"http://openweathermap.org/img/wn/{icon}.png"
+        icon_response = requests.get(icon_url)
+        if icon_response.status_code == 200:
+            with open("weather_icon.png", "wb") as f:
+                f.write(icon_response.content)
+            self.weather_icon_label.photo = tk.PhotoImage(file="weather_icon.png")
+            self.weather_icon_label.config(image=self.weather_icon_label.photo)
+        else:
+            self.weather_icon_label.config(text="Icon not available.")
+
+def main():
+    root = tk.Tk()
+    app = WeatherApp(root)
+    root.mainloop()
+
+if __name__ == "__main__":
+    main()
